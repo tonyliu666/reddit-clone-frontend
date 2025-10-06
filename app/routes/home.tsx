@@ -1,11 +1,13 @@
 import { useState } from "react";
 import PostList from "../components/PostList";
 import CreatePost from "../components/CreatePost";
-import CommunityList from "../components/CommunityList";
+import CreateCommunityModal from "../components/CommunityList";
+import Sidebar from "../components/Sidebar";   
 import type { Post } from "../types/types";
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [showModal, setShowModal] = useState(false);
 
   const addPost = (newPost: Post) => {
     setPosts([...posts, newPost]);
@@ -14,8 +16,8 @@ export default function Home() {
   return (
     <div
       style={{
-        backgroundColor: "#dae0e6", // Reddit light gray
-        minHeight: "100vh",         // full screen height
+        backgroundColor: "#dae0e6",
+        minHeight: "100vh",
         display: "flex",
         justifyContent: "center",
         padding: "20px",
@@ -26,10 +28,12 @@ export default function Home() {
           display: "flex",
           gap: "20px",
           width: "100%",
-          maxWidth: "1200px", // center like Reddit
+          maxWidth: "1200px",
         }}
       >
-        {/* Left column for posts */}
+        <Sidebar />
+
+        {/* Middle column for posts */}
         <div style={{ flex: 2 }}>
           <div
             style={{
@@ -42,11 +46,10 @@ export default function Home() {
           >
             <CreatePost />
           </div>
-
           
         </div>
 
-        {/* Optional right column for communities */}
+        {/* Right column for community actions */}
         <div style={{ flex: 1 }}>
           <div
             style={{
@@ -56,7 +59,16 @@ export default function Home() {
               boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
             }}
           >
-            <CommunityList />
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+            >
+              + Create Community
+            </button>
+
+            {showModal && (
+              <CreateCommunityModal onClose={() => setShowModal(false)} />
+            )}
           </div>
         </div>
       </div>
