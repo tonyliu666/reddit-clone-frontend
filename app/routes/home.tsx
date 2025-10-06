@@ -32,8 +32,6 @@ export default function Home() {
         }}
       >
         <Sidebar />
-
-        {/* Middle column for posts */}
         <div style={{ flex: 2 }}>
           <div
             style={{
@@ -45,30 +43,6 @@ export default function Home() {
             }}
           >
             <CreatePost />
-          </div>
-          
-        </div>
-
-        {/* Right column for community actions */}
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              backgroundColor: "white",
-              borderRadius: "8px",
-              padding: "16px",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-            }}
-          >
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded w-full"
-            >
-              + Create Community
-            </button>
-
-            {showModal && (
-              <CreateCommunityModal onClose={() => setShowModal(false)} />
-            )}
           </div>
         </div>
       </div>

@@ -54,12 +54,17 @@ export function SidebarSection({
 export function SidebarAction({
   icon,
   label,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
+  onClick?: () => void;   // 👈 allow optional onClick
 }) {
   return (
-    <button className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline">
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline"
+    >
       <span>{icon}</span>
       {label}
     </button>
