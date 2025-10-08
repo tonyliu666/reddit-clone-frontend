@@ -17,13 +17,19 @@ export default function Sidebar() {
   const [showCustomFeeds, setShowCustomFeeds] = useState(true);
   const [showRecent, setShowRecent] = useState(true);
 
-  const communities: Community[] = [
-    { id: "1", name: "r/CryptoTechnology", icon: "💰" },
-    { id: "2", name: "r/docker", icon: "🐳" },
-    { id: "3", name: "r/eBPF", icon: "🐝" },
-    { id: "4", name: "r/FlutterDev", icon: "📱" },
-  ];
+  // call the api endpoint to get the list of communities
+    // localhost:8080/api/v1/communities-list
+    async function fetchCommunities() {
+      const response = await fetch("http://localhost:8080/api/v1/communities-list");
+      const data = await response.json();
+      return data;
+    }
+    const [communities, setCommunities] = useState<Community[]>(() => {
+        fetchCommunities().then(data => setCommunities(data)).catch(err => console.error("Error fetching communities:", err));
+        return [];
+    });
 
+  
   const recent: Community[] = [
     { id: "5", name: "r/buildapc", icon: "🖥️" },
     { id: "6", name: "r/SideProject", icon: "🚀" },

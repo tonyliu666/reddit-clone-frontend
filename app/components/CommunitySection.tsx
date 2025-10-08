@@ -6,7 +6,9 @@ import CreateCommunityModal from "./CommunityList"; // import your modal
 interface Community {
   id: string;
   name: string;
-  icon?: string;
+  description?: string;
+  bannerImage?: string;
+  iconImage?: string;
 }
 
 export default function CommunitiesSection({
@@ -26,17 +28,16 @@ export default function CommunitiesSection({
         <SidebarAction
           icon={<Plus />}
           label="Create Community"
-          onClick={() => setShowModal(true)}   // 👈 open modal
+          onClick={() => setShowModal(true)}  
         />
         <SidebarAction icon="⚙️" label="Manage Communities" />
         <div className="mt-2 space-y-2">
           {communities.map((c) => (
-            <SidebarItem key={c.id} icon={c.icon} label={c.name} />
+            <p> {c.name}  {c.id} {c.description} {c.bannerImage} {c.iconImage}</p>
           ))}
         </div>
       </SidebarSection>
 
-      {/* Conditionally render modal */}
       {showModal && <CreateCommunityModal onClose={() => setShowModal(false)} />}
     </>
   );
