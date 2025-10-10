@@ -4,11 +4,10 @@ import { SidebarSection, SidebarAction, SidebarItem } from "./NavigationSection"
 import CreateCommunityModal from "./CommunityList"; // import your modal
 
 interface Community {
-  id: string;
   name: string;
   description?: string;
-  bannerImage?: string;
-  iconImage?: string;
+  bannerImageBytes?: string;
+  iconImageBytes?: string;
 }
 
 export default function CommunitiesSection({
@@ -33,9 +32,29 @@ export default function CommunitiesSection({
         <SidebarAction icon="⚙️" label="Manage Communities" />
         <div className="mt-2 space-y-2">
           {communities.map((c) => (
-            <p> {c.name}  {c.id} {c.description} {c.bannerImage} {c.iconImage}</p>
+            <div key={c.name}>
+              <h3>{c.name}</h3>
+              <p>{c.description}</p>
+
+              {c.bannerImageBytes && (
+                <img
+                  src={`data:image/png;base64,${c.bannerImageBytes}`}
+                  alt={`${c.name} banner`}
+                  className="w-48 h-32 object-cover"
+                />
+              )}
+
+              {c.iconImageBytes && (
+                <img
+                  src={`data:image/png;base64,${c.iconImageBytes}`}
+                  alt={`${c.name} icon`}
+                  className="w-16 h-16 object-cover"
+                />
+              )}
+            </div>
           ))}
         </div>
+
       </SidebarSection>
 
       {showModal && <CreateCommunityModal onClose={() => setShowModal(false)} />}
