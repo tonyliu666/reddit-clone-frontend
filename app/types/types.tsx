@@ -6,11 +6,12 @@ export interface Post {
   downvotes: number;
 }
 
-export interface Community {
-  id: number;
+export type Community = {
   name: string;
-  description: string;
-}
+  description?: string;
+  iconImageBytes?: string;
+  bannerImageBytes?: string;
+};
 
 export interface Comment {
   id: number;
