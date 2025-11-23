@@ -14,9 +14,56 @@ export default function LoginModal({ onClose }: LoginModalProps) {
     console.log("Logging in:", account, password);
   };
 
-  const handleSignupClick = () => {
-    console.log("Signing up:", account, password);
-    // send encrypted account and password to backend for registration
+  const getPublicKey = async () => {
+    try {
+        const response = await fetch("http://localhost:8080/api/v1/public-key");
+        const publicKey = await response.text();
+        return publicKey;
+    }
+    catch (error) {
+        console.error("Error fetching public key:", error);
+        return null;
+    }
+  }
+
+  const createEncryptedAccountAndPassword = async () => {
+    const publicKey = await getPublicKey();
+    if (!publicKey) {
+        console.error("No public key available for encryption.");
+        return;
+    }
+    const encryptedAccount = CryptoJS.AES.encrypt(account, publicKey).toString();
+    const encryptedPassword = CryptoJS.AES.encrypt(password, publicKey).toString();
+    return { encryptedAccount, encryptedPassword };
+  }
+
+  const handleSignupClick = async () => {
+    // call to the endpoint: localhost:8080/api/v1/public-key
+    createEncryptedAccountAndPassword().then((result) => {
+        if (!result) {
+            console.error("Encryption failed, cannot signup.");
+            return;
+        }
+        const { encryptedAccount, encryptedPassword } = result;
+        console.log("Encrypted Account:", encryptedAccount);
+        console.log("Encrypted Password:", encryptedPassword);
+        // send encryptedAccount and encryptedPassword to backend signup endpoint
+        fetch("http://localhost:8080/api/v1/signup", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                account: encryptedAccount,
+                password: encryptedPassword,
+            }),
+        })
+        .then((res) => alert("Signup successful! Please log in."))
+        
+        .catch((err) => console.error("Error during signup:", err));
+    });
+   
+
 
     setIsSignupMode(false); // Switch back to login after signup
   };
