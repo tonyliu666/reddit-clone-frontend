@@ -1,5 +1,5 @@
-import  { useState } from "react";
-import CryptoJS from "crypto-js";
+import { useState } from "react";
+import EncryptRSA from 'encrypt-rsa';
 
 type LoginModalProps = {
   onClose: () => void;
@@ -10,60 +10,101 @@ export default function LoginModal({ onClose }: LoginModalProps) {
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLoginClick = () => {
-    console.log("Logging in:", account, password);
+  const handleLoginClick = async () => {
+    // call the getPublicKey function at first to get the public key 
+    const publicKey = await getPublicKey();
+    if (!publicKey) {
+      console.error("No public key available for encryption.");
+      return;
+    }
+    const encryptRsa = new EncryptRSA();
+    const encryptedAccount = encryptRsa.encryptStringWithRsaPublicKey({ text: account, publicKey });
+    const encryptedPassword = encryptRsa.encryptStringWithRsaPublicKey({ text: password, publicKey });
+    // check this encrypted account in database
+    fetch("http://localhost:8080/api/v1/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        encryptedAccount: encryptedAccount,
+        encryptedPassWord: encryptedPassword,
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          // Server returned an error status (4xx, 5xx)
+          const errorText = await res.text();
+          throw new Error(`Login failed: ${errorText || res.statusText}`);
+        }
+        return res;
+      })
+      .catch((err) => {
+        console.error("Error during login:", err);
+        alert(`Login failed: ${err.message}`);
+      });
+
   };
 
   const getPublicKey = async () => {
     try {
-        const response = await fetch("http://localhost:8080/api/v1/public-key");
-        const publicKey = await response.text();
-        return publicKey;
+      const response = await fetch("http://localhost:8080/api/v1/public-key");
+      const publicKey = await response.text();
+      return publicKey;
     }
     catch (error) {
-        console.error("Error fetching public key:", error);
-        return null;
+      console.error("Error fetching public key:", error);
+      return null;
     }
   }
 
   const createEncryptedAccountAndPassword = async () => {
     const publicKey = await getPublicKey();
     if (!publicKey) {
-        console.error("No public key available for encryption.");
-        return;
+      console.error("No public key available for encryption.");
+      return;
     }
-    const encryptedAccount = CryptoJS.AES.encrypt(account, publicKey).toString();
-    const encryptedPassword = CryptoJS.AES.encrypt(password, publicKey).toString();
-    return { encryptedAccount, encryptedPassword };
+    const encryptRsa = new EncryptRSA();
+    const encryptedAccount = encryptRsa.encryptStringWithRsaPublicKey({ text: account, publicKey });
+    const encryptedPassWord = encryptRsa.encryptStringWithRsaPublicKey({ text: password, publicKey });
+    return { encryptedAccount, encryptedPassWord };
   }
 
   const handleSignupClick = async () => {
     // call to the endpoint: localhost:8080/api/v1/public-key
     createEncryptedAccountAndPassword().then((result) => {
-        if (!result) {
-            console.error("Encryption failed, cannot signup.");
-            return;
-        }
-        const { encryptedAccount, encryptedPassword } = result;
-        console.log("Encrypted Account:", encryptedAccount);
-        console.log("Encrypted Password:", encryptedPassword);
-        // send encryptedAccount and encryptedPassword to backend signup endpoint
-        fetch("http://localhost:8080/api/v1/signup", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                account: encryptedAccount,
-                password: encryptedPassword,
-            }),
+      if (!result) {
+        console.error("Encryption failed, cannot signup.");
+        return;
+      }
+      const { encryptedAccount, encryptedPassWord } = result;
+      console.log("Encrypted Account:", encryptedAccount);
+      console.log("Encrypted Password:", encryptedPassWord);
+      // send encryptedAccount and encryptedPassword to backend signup endpoint
+      fetch("http://localhost:8080/api/v1/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          encryptedAccount: encryptedAccount,
+          encryptedPassWord: encryptedPassWord,
+        }),
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            // Server returned an error status (4xx, 5xx)
+            const errorText = await res.text();
+            throw new Error(`Signup failed: ${errorText || res.statusText}`);
+          }
+          return res;
         })
         .then((res) => alert("Signup successful! Please log in."))
-        
-        .catch((err) => console.error("Error during signup:", err));
+        .catch((err) => {
+          console.error("Error during signup:", err);
+          alert(`Signup failed: ${err.message}`);
+        });
     });
-   
-
 
     setIsSignupMode(false); // Switch back to login after signup
   };
