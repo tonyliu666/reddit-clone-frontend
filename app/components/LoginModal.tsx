@@ -1,5 +1,5 @@
 import { useState } from "react";
-import EncryptRSA from 'encrypt-rsa';
+import { JSEncrypt } from 'jsencrypt';
 
 type LoginModalProps = {
   onClose: () => void;
@@ -17,9 +17,10 @@ export default function LoginModal({ onClose }: LoginModalProps) {
       console.error("No public key available for encryption.");
       return;
     }
-    const encryptRsa = new EncryptRSA();
-    const encryptedAccount = encryptRsa.encryptStringWithRsaPublicKey({ text: account, publicKey });
-    const encryptedPassword = encryptRsa.encryptStringWithRsaPublicKey({ text: password, publicKey });
+    const encrypt = new JSEncrypt();
+    encrypt.setPublicKey(publicKey);
+    const encryptedAccount = encrypt.encrypt(account);
+    const encryptedPassword = encrypt.encrypt(password);
     // check this encrypted account in database
     fetch("http://localhost:8080/api/v1/login", {
       method: "POST",
@@ -64,10 +65,11 @@ export default function LoginModal({ onClose }: LoginModalProps) {
       console.error("No public key available for encryption.");
       return;
     }
-    const encryptRsa = new EncryptRSA();
-    const encryptedAccount = encryptRsa.encryptStringWithRsaPublicKey({ text: account, publicKey });
-    const encryptedPassWord = encryptRsa.encryptStringWithRsaPublicKey({ text: password, publicKey });
-    return { encryptedAccount, encryptedPassWord };
+    const encrypt = new JSEncrypt();
+    encrypt.setPublicKey(publicKey);
+    const encryptedAccount = encrypt.encrypt(account);
+    const encryptedPassword = encrypt.encrypt(password);
+    return { encryptedAccount, encryptedPassWord: encryptedPassword };
   }
 
   const handleSignupClick = async () => {
