@@ -9,44 +9,6 @@ export default function LoginModal({ onClose }: LoginModalProps) {
   const [isSignupMode, setIsSignupMode] = useState(false);
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
-
-  const handleLoginClick = async () => {
-    // call the getPublicKey function at first to get the public key 
-    const publicKey = await getPublicKey();
-    if (!publicKey) {
-      console.error("No public key available for encryption.");
-      return;
-    }
-    const encrypt = new JSEncrypt();
-    encrypt.setPublicKey(publicKey);
-    const encryptedAccount = encrypt.encrypt(account);
-    const encryptedPassword = encrypt.encrypt(password);
-    // check this encrypted account in database
-    fetch("http://localhost:8080/api/v1/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        encryptedAccount: encryptedAccount,
-        encryptedPassWord: encryptedPassword,
-      }),
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          // Server returned an error status (4xx, 5xx)
-          const errorText = await res.text();
-          throw new Error(`Login failed: ${errorText || res.statusText}`);
-        }
-        return res;
-      })
-      .catch((err) => {
-        console.error("Error during login:", err);
-        alert(`Login failed: ${err.message}`);
-      });
-
-  };
-
   const getPublicKey = async () => {
     try {
       const response = await fetch("http://localhost:8080/api/v1/public-key");
@@ -67,10 +29,46 @@ export default function LoginModal({ onClose }: LoginModalProps) {
     }
     const encrypt = new JSEncrypt();
     encrypt.setPublicKey(publicKey);
-    const encryptedAccount = encrypt.encrypt(account);
+  
     const encryptedPassword = encrypt.encrypt(password);
-    return { encryptedAccount, encryptedPassWord: encryptedPassword };
+    return { encryptedAccount: account, encryptedPassWord: encryptedPassword };
   }
+
+  const handleLoginClick = async () => {
+    // call the getPublicKey function at first to get the public key 
+    createEncryptedAccountAndPassword().then((result) => {
+      if (!result) {
+        console.error("Encryption failed, cannot login.");
+        return;
+      }
+      const { encryptedAccount, encryptedPassWord } = result;
+      // check this encrypted account in database
+      fetch("http://localhost:8080/api/v1/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          encryptedAccount: encryptedAccount,
+          encryptedPassWord: encryptedPassWord,
+        }),
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            // Server returned an error status (4xx, 5xx)
+            const errorText = await res.text();
+            throw new Error(`Login failed: ${errorText || res.statusText}`);
+          }
+          alert("Login successful!");
+          return res;
+        })
+        .catch((err) => {
+          console.error("Error during login:", err);
+          alert(`Login failed: ${err.message}`);
+        });
+    });
+  };
+
 
   const handleSignupClick = async () => {
     // call to the endpoint: localhost:8080/api/v1/public-key
@@ -80,8 +78,6 @@ export default function LoginModal({ onClose }: LoginModalProps) {
         return;
       }
       const { encryptedAccount, encryptedPassWord } = result;
-      console.log("Encrypted Account:", encryptedAccount);
-      console.log("Encrypted Password:", encryptedPassWord);
       // send encryptedAccount and encryptedPassword to backend signup endpoint
       fetch("http://localhost:8080/api/v1/signup", {
         method: "POST",
