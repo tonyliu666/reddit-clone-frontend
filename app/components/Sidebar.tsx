@@ -4,6 +4,7 @@ import NavigationSection, { SidebarAction, SidebarItem, SidebarSection } from ".
 import CommunitiesSection from "./CommunitySection";
 import CustomFeedsSection from "./CustomFeedSection";
 import RecentSection from "./RecentSection";
+import ChatBotSection from "./ChatBotSection";
 
 interface Community {
   id: string;
@@ -16,20 +17,21 @@ export default function Sidebar() {
   const [showCommunities, setShowCommunities] = useState(true);
   const [showCustomFeeds, setShowCustomFeeds] = useState(true);
   const [showRecent, setShowRecent] = useState(true);
+  const [showChatBot, setShowChatBot] = useState(true);
 
   // call the api endpoint to get the list of communities
-    // localhost:8080/api/v1/communities-list
-    async function fetchCommunities() {
-      const response = await fetch("http://localhost:8080/api/v1/communities-list");
-      const data = await response.json();
-      return data;
-    }
-    const [communities, setCommunities] = useState<Community[]>(() => {
-        fetchCommunities().then(data => setCommunities(data)).catch(err => console.error("Error fetching communities:", err));
-        return [];
-    });
+  // localhost:8080/api/v1/communities-list
+  async function fetchCommunities() {
+    const response = await fetch("http://localhost:8080/api/v1/communities-list");
+    const data = await response.json();
+    return data;
+  }
+  const [communities, setCommunities] = useState<Community[]>(() => {
+    fetchCommunities().then(data => setCommunities(data)).catch(err => console.error("Error fetching communities:", err));
+    return [];
+  });
 
-  
+
   const recent: Community[] = [
     { id: "5", name: "r/buildapc", icon: "🖥️" },
     { id: "6", name: "r/SideProject", icon: "🚀" },
@@ -44,6 +46,8 @@ export default function Sidebar() {
       <CustomFeedsSection expanded={showCustomFeeds} onToggle={() => setShowCustomFeeds(!showCustomFeeds)} />
 
       <RecentSection recent={recent} expanded={showRecent} onToggle={() => setShowRecent(!showRecent)} />
+
+      <ChatBotSection expanded={showChatBot} onToggle={() => setShowChatBot(!showChatBot)} />
     </div>
   );
 }

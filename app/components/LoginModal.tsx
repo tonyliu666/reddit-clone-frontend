@@ -99,8 +99,11 @@ export default function LoginModal({ onClose }: LoginModalProps) {
         })
         .then((res) => alert("Signup successful! Please log in."))
         .catch((err) => {
-          console.error("Error during signup:", err);
-          alert(`Signup failed: ${err.message}`);
+          if(err.message=="User already exists"){
+            alert("User already exists, please rename another account name!");
+          }else{
+            alert(`Signup failed: ${err.message}`);
+          }
         });
     });
 
