@@ -3,6 +3,7 @@ import PostList from "../components/PostList";
 import CreatePost from "../components/CreatePost";
 import CreateCommunityModal from "../components/CommunityList";
 import Sidebar from "../components/Sidebar";
+import ChatPane from "../components/ChatPane";
 import type { Post } from "../types/types";
 import LoginModal from "../components/LoginModal";
 
@@ -10,6 +11,7 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [showLogin, setShowLogin] = useState(false);
   const [user, setUser] = useState<string | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const addPost = (newPost: Post) => {
     setPosts([...posts, newPost]);
@@ -20,7 +22,7 @@ export default function Home() {
 
   };
   const handleRegistration = (username: string, password: string) => {
-    
+
   }
 
   const handleLogout = () => {
@@ -45,7 +47,7 @@ export default function Home() {
           maxWidth: "1200px",
         }}
       >
-        <Sidebar />
+        <Sidebar onAskAI={() => setIsChatOpen(true)} />
         <div style={{ flex: 2 }}>
           {/* Header */}
           <div
@@ -138,6 +140,10 @@ export default function Home() {
         <LoginModal
           onClose={() => setShowLogin(false)}
         />
+      )}
+
+      {isChatOpen && (
+        <ChatPane onClose={() => setIsChatOpen(false)} />
       )}
     </div>
   );

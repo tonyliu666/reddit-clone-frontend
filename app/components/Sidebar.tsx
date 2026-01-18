@@ -12,7 +12,7 @@ interface Community {
   icon?: string;
 }
 
-export default function Sidebar() {
+export default function Sidebar({ onAskAI }: { onAskAI?: () => void }) {
   const [showNavigation, setShowNavigation] = useState(true);
   const [showCommunities, setShowCommunities] = useState(true);
   const [showCustomFeeds, setShowCustomFeeds] = useState(true);
@@ -47,7 +47,7 @@ export default function Sidebar() {
 
       <RecentSection recent={recent} expanded={showRecent} onToggle={() => setShowRecent(!showRecent)} />
 
-      <ChatBotSection expanded={showChatBot} onToggle={() => setShowChatBot(!showChatBot)} />
+      <ChatBotSection expanded={showChatBot} onToggle={() => setShowChatBot(!showChatBot)} onAskAI={onAskAI} />
     </div>
   );
 }
