@@ -1,12 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { X, Send, Bot, User } from "lucide-react";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+
+interface Message {
+    role: "user" | "bot";
+    text: string;
+    sender?: string;
+    content?: string;
+}
 
 export default function ChatPane({ onClose }: { onClose: () => void }) {
-    const [messages, setMessages] = useState<{ role: "user" | "bot"; text: string }[]>([
+    const [messages, setMessages] = useState<Message[]>([
         { role: "bot", text: "Hello! I'm your AI assistant. How can I help you today?" }
     ]);
     const [input, setInput] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const stompClientRef = useRef<Client | null>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -16,15 +26,57 @@ export default function ChatPane({ onClose }: { onClose: () => void }) {
         scrollToBottom();
     }, [messages]);
 
-    const handleSend = () => {
-        if (!input.trim()) return;
-        setMessages([...messages, { role: "user", text: input }]);
-        setInput("");
+    useEffect(() => {
+        const socket = new SockJS("http://localhost:8080/ws");
+        const client = new Client({
+            webSocketFactory: () => socket,
+            debug: (str) => console.log("STOMP: " + str),
+            reconnectDelay: 5000,
+            heartbeatIncoming: 4000,
+            heartbeatOutgoing: 4000,
+        });
 
-        // Simulate AI response
-        setTimeout(() => {
-            setMessages(prev => [...prev, { role: "bot", text: "I'm a demo bot, but I can see you said: " + input }]);
-        }, 1000);
+        client.onConnect = () => {
+            console.log("Connected to WebSocket");
+            client.subscribe("/api/v1/topic/messages", (message) => {
+                const payload = JSON.parse(message.body);
+                setMessages((prev) => [
+                    ...prev,
+                    {
+                        role: payload.sender === "You" ? "user" : "bot",
+                        text: payload.content || payload.text || ""
+                    }
+                ]);
+            });
+        };
+
+        client.onStompError = (frame) => {
+            console.error("STOMP error", frame.headers["message"]);
+        };
+
+        client.activate();
+        stompClientRef.current = client;
+
+        return () => {
+            client.deactivate();
+        };
+    }, []);
+
+    const handleSend = () => {
+        if (!input.trim() || !stompClientRef.current?.connected) return;
+
+        const chatMessage = {
+            sender: "You",
+            content: input,
+            type: "CHAT"
+        };
+
+        stompClientRef.current.publish({
+            destination: "/api/v1/chat",
+            body: JSON.stringify(chatMessage),
+        });
+
+        setInput("");
     };
 
     return (
@@ -48,8 +100,8 @@ export default function ChatPane({ onClose }: { onClose: () => void }) {
                 {messages.map((m, i) => (
                     <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                         <div className={`max-w-[80%] p-3 rounded-2xl flex gap-2 ${m.role === "user"
-                                ? "bg-blue-600 text-white rounded-tr-none"
-                                : "bg-white text-gray-800 shadow-sm border border-gray-100 rounded-tl-none"
+                            ? "bg-blue-600 text-white rounded-tr-none"
+                            : "bg-white text-gray-800 shadow-sm border border-gray-100 rounded-tl-none"
                             }`}>
                             {m.role === "bot" && <Bot size={16} className="shrink-0 mt-1 opacity-70" />}
                             <p className="text-sm leading-relaxed">{m.text}</p>

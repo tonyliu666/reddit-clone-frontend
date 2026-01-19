@@ -5,6 +5,9 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import path from "path";
 
 export default defineConfig({
+  define: {
+    global: 'globalThis',
+  },
   resolve: {
     alias: {
       jsencrypt: path.resolve(process.cwd(), "node_modules/jsencrypt/lib/JSEncrypt.js"),
