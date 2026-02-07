@@ -38,7 +38,7 @@ export default function ChatPane({ onClose }: { onClose: () => void }) {
 
         client.onConnect = () => {
             console.log("Connected to WebSocket");
-            client.subscribe("/api/v1/topic/messages", (message) => {
+            client.subscribe("/topic/messages", (message) => {
                 const payload = JSON.parse(message.body);
                 setMessages((prev) => [
                     ...prev,
@@ -48,6 +48,7 @@ export default function ChatPane({ onClose }: { onClose: () => void }) {
                     }
                 ]);
             });
+            console.log("Subscribed to /topic/messages");
         };
 
         client.onStompError = (frame) => {
@@ -70,9 +71,10 @@ export default function ChatPane({ onClose }: { onClose: () => void }) {
             content: input,
             type: "CHAT"
         };
+        console.log("Sending message:", chatMessage);
 
         stompClientRef.current.publish({
-            destination: "/api/v1/chat",
+            destination: "/app/messages/chat",
             body: JSON.stringify(chatMessage),
         });
 
