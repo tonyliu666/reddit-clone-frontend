@@ -15,6 +15,7 @@ export default function ChatPane({ onClose }: { onClose: () => void }) {
         { role: "bot", text: "Hello! I'm your AI assistant. How can I help you today?" }
     ]);
     const [input, setInput] = useState("");
+    const [isThinking, setIsThinking] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const stompClientRef = useRef<Client | null>(null);
 
@@ -40,13 +41,17 @@ export default function ChatPane({ onClose }: { onClose: () => void }) {
             console.log("Connected to WebSocket");
             client.subscribe("/topic/messages", (message) => {
                 const payload = JSON.parse(message.body);
-                setMessages((prev) => [
-                    ...prev,
-                    {
-                        role: payload.sender === "You" ? "user" : "bot",
-                        text: payload.content || payload.text || ""
-                    }
-                ]);
+                // Only add if it's not our own message (we add it optimistically)
+                if (payload.sender !== "You") {
+                    setIsThinking(false);
+                    setMessages((prev) => [
+                        ...prev,
+                        {
+                            role: "bot",
+                            text: payload.content || payload.text || ""
+                        }
+                    ]);
+                }
             });
             console.log("Subscribed to /topic/messages");
         };
@@ -71,7 +76,10 @@ export default function ChatPane({ onClose }: { onClose: () => void }) {
             content: input,
             type: "CHAT"
         };
-        console.log("Sending message:", chatMessage);
+
+        // Add user message to state immediately for better UX
+        setMessages(prev => [...prev, { role: "user", text: input }]);
+        setIsThinking(true);
 
         stompClientRef.current.publish({
             destination: "/app/messages/chat",
@@ -111,6 +119,18 @@ export default function ChatPane({ onClose }: { onClose: () => void }) {
                         </div>
                     </div>
                 ))}
+                {isThinking && (
+                    <div className="flex justify-start">
+                        <div className="bg-white text-gray-800 shadow-sm border border-gray-100 rounded-2xl rounded-tl-none p-3 flex gap-2 items-center">
+                            <Bot size={16} className="shrink-0 opacity-70" />
+                            <div className="flex gap-1">
+                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 <div ref={messagesEndRef} />
             </div>
 
@@ -123,7 +143,7 @@ export default function ChatPane({ onClose }: { onClose: () => void }) {
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSend()}
                         placeholder="Type a message..."
-                        className="w-full pl-4 pr-12 py-3 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full pl-4 pr-12 py-3 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm p-4 text-blue-600 placeholder:text-gray-400"
                     />
                     <button
                         onClick={handleSend}
